@@ -1,0 +1,106 @@
+<html>
+<head>
+<title>Sentiment_Data_Analysis.py</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #cc7832;}
+.s1 { color: #a9b7c6;}
+.s2 { color: #808080;}
+.s3 { color: #6a8759;}
+.s4 { color: #6897bb;}
+</style>
+</head>
+<body bgcolor="#2b2b2b">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+Sentiment_Data_Analysis.py</font>
+</center></td></tr></table>
+<pre><span class="s0">import </span><span class="s1">tweepy</span>
+<span class="s0">from </span><span class="s1">textblob </span><span class="s0">import </span><span class="s1">TextBlob</span>
+<span class="s0">import </span><span class="s1">pandas </span><span class="s0">as </span><span class="s1">pd</span>
+<span class="s0">import </span><span class="s1">re</span>
+<span class="s0">import </span><span class="s1">matplotlib.pyplot </span><span class="s0">as </span><span class="s1">plt</span>
+
+<span class="s2"># Set up the Twitter API client</span>
+<span class="s1">consumer_key = </span><span class="s3">&quot;oQOZziwefSVomVRVwCacpmPdc&quot;</span>
+<span class="s1">consumer_secret = </span><span class="s3">&quot;F967ftRdAuvpKb9HYMctD6Rdp8jjfYWUbV8LYvuffrIN1dyXdm&quot;</span>
+<span class="s1">access_token = </span><span class="s3">&quot;1618461093101199360-TMvv3TaZHzenBA5e4zmOfjwMT5RarB&quot;</span>
+<span class="s1">access_token_secret = </span><span class="s3">&quot;Mp1v68HxWOiCptufZdDWxH3xhScWYkFlDkc1qMV1OIzHI&quot;</span>
+
+<span class="s1">auth = tweepy.OAuthHandler(consumer_key</span><span class="s0">, </span><span class="s1">consumer_secret)</span>
+<span class="s1">auth.set_access_token(access_token</span><span class="s0">, </span><span class="s1">access_token_secret)</span>
+<span class="s1">api = tweepy.API(auth</span><span class="s0">, </span><span class="s1">wait_on_rate_limit=</span><span class="s0">True</span><span class="s1">)</span>
+
+<span class="s2"># Define the categories and the search query</span>
+<span class="s1">categories = [</span><span class="s3">&quot;Excel&quot;</span><span class="s0">, </span><span class="s3">&quot;Power BI&quot;</span><span class="s0">, </span><span class="s3">&quot;Python&quot;</span><span class="s1">]</span>
+
+<span class="s2"># Define the regular expression patterns for each category</span>
+<span class="s1">category_patterns = {</span>
+    <span class="s3">&quot;Excel&quot;</span><span class="s1">: </span><span class="s3">r&quot;\bexcel\b|\bexcelled\b|\bexcelerate\b|\bexcelsior\b&quot;</span><span class="s0">,</span>
+    <span class="s3">&quot;Power BI&quot;</span><span class="s1">: </span><span class="s3">r&quot;\bpowerbi\b|\bpower\sbi\b|\bpbi\b&quot;</span><span class="s0">,</span>
+    <span class="s3">&quot;Python&quot;</span><span class="s1">: </span><span class="s3">r&quot;\bpython\b|\bpy\b&quot;</span><span class="s0">,</span>
+<span class="s1">}</span>
+
+<span class="s2"># Compile the regular expression patterns</span>
+<span class="s1">compiled_patterns = {category: re.compile(pattern</span><span class="s0">, </span><span class="s1">re.IGNORECASE) </span><span class="s0">for </span><span class="s1">category</span><span class="s0">, </span><span class="s1">pattern </span><span class="s0">in </span><span class="s1">category_patterns.items()}</span>
+
+<span class="s2"># Define a function to extract the category from the tweet text</span>
+<span class="s0">def </span><span class="s1">extract_category(tweet_text):</span>
+    <span class="s0">for </span><span class="s1">category</span><span class="s0">, </span><span class="s1">pattern </span><span class="s0">in </span><span class="s1">compiled_patterns.items():</span>
+        <span class="s0">if </span><span class="s1">pattern.search(tweet_text):</span>
+            <span class="s0">return </span><span class="s1">category</span>
+    <span class="s0">return </span><span class="s3">&quot;Other&quot;</span>
+<span class="s1">query = </span><span class="s3">&quot; OR &quot;</span><span class="s1">.join(categories)</span>
+
+<span class="s2"># Define the location and the date range</span>
+<span class="s1">location = </span><span class="s3">&quot;USA&quot;</span>
+<span class="s1">start_date = </span><span class="s3">&quot;2023-01-01&quot;</span>
+<span class="s1">end_date = </span><span class="s3">&quot;2023-03-31&quot;</span>
+
+<span class="s2"># Retrieve the tweets</span>
+<span class="s1">tweets = []</span>
+<span class="s0">for </span><span class="s1">tweet </span><span class="s0">in </span><span class="s1">tweepy.Cursor(api.search_tweets</span><span class="s0">, </span><span class="s1">q=query</span><span class="s0">, </span><span class="s1">lang=</span><span class="s3">&quot;en&quot;</span><span class="s0">, </span><span class="s1">geocode=</span><span class="s3">f&quot;39.8333,-98.5833,2500km&quot;</span><span class="s0">, </span><span class="s1">since_id=start_date</span><span class="s0">, </span><span class="s1">until=end_date).items(</span><span class="s4">1000</span><span class="s1">):</span>
+    <span class="s2"># Extract the relevant information</span>
+    <span class="s1">user_account = tweet.user.screen_name</span>
+    <span class="s1">user_followers = tweet.user.followers_count</span>
+    <span class="s1">user_tweets = tweet.user.statuses_count</span>
+    <span class="s1">user_retweets = tweet.retweet_count</span>
+    <span class="s1">tweet_text = re.sub(</span><span class="s3">r&quot;http\S+&quot;</span><span class="s0">, </span><span class="s3">&quot;&quot;</span><span class="s0">, </span><span class="s1">tweet.text)  </span><span class="s2"># Remove URLs</span>
+    <span class="s1">tweet_text = re.sub(</span><span class="s3">r&quot;@\S+&quot;</span><span class="s0">, </span><span class="s3">&quot;&quot;</span><span class="s0">, </span><span class="s1">tweet_text)  </span><span class="s2"># Remove mentions</span>
+    <span class="s1">tweet_text = tweet_text.strip()  </span><span class="s2"># Remove leading/trailing whitespace</span>
+    <span class="s0">if not </span><span class="s1">tweet_text.startswith(</span><span class="s3">&quot;RT&quot;</span><span class="s1">) </span><span class="s0">and not </span><span class="s1">tweet_text.startswith(</span><span class="s3">&quot;@&quot;</span><span class="s1">):  </span><span class="s2"># Remove retweets and mentions-only tweets</span>
+        <span class="s2"># Classify the sentiment using TextBlob</span>
+        <span class="s1">sentiment = TextBlob(tweet_text).sentiment.polarity</span>
+        <span class="s0">if </span><span class="s1">sentiment &gt; </span><span class="s4">0</span><span class="s1">:</span>
+            <span class="s1">sentiment_label = </span><span class="s3">&quot;positive&quot;</span>
+        <span class="s0">elif </span><span class="s1">sentiment &lt; </span><span class="s4">0</span><span class="s1">:</span>
+            <span class="s1">sentiment_label = </span><span class="s3">&quot;negative&quot;</span>
+        <span class="s0">else</span><span class="s1">:</span>
+            <span class="s1">sentiment_label = </span><span class="s3">&quot;neutral&quot;</span>
+        <span class="s2"># Extract the other information</span>
+        <span class="s1">tweet_date = tweet.created_at</span>
+        <span class="s1">tweet_location = tweet.user.location</span>
+        <span class="s1">tweet_hashtags = [tag[</span><span class="s3">&quot;text&quot;</span><span class="s1">] </span><span class="s0">for </span><span class="s1">tag </span><span class="s0">in </span><span class="s1">tweet.entities[</span><span class="s3">&quot;hashtags&quot;</span><span class="s1">]]</span>
+        <span class="s2"># Add the information to the list of tweets</span>
+        <span class="s1">tweets.append([user_account</span><span class="s0">, </span><span class="s1">user_followers</span><span class="s0">, </span><span class="s1">user_tweets</span><span class="s0">, </span><span class="s1">user_retweets</span><span class="s0">, </span><span class="s1">tweet_text</span><span class="s0">, </span><span class="s1">tweet_date</span><span class="s0">, </span><span class="s1">tweet_location</span><span class="s0">, </span><span class="s1">tweet_hashtags</span><span class="s0">, </span><span class="s1">sentiment_label])</span>
+
+<span class="s2"># Create a DataFrame from the tweets</span>
+<span class="s1">df = pd.DataFrame(tweets</span><span class="s0">, </span><span class="s1">columns=[</span><span class="s3">&quot;User Account&quot;</span><span class="s0">, </span><span class="s3">&quot;Followers&quot;</span><span class="s0">, </span><span class="s3">&quot;Tweets&quot;</span><span class="s0">, </span><span class="s3">&quot;Retweets&quot;</span><span class="s0">, </span><span class="s3">&quot;Text&quot;</span><span class="s0">, </span><span class="s3">&quot;Date&quot;</span><span class="s0">, </span><span class="s3">&quot;Location&quot;</span><span class="s0">, </span><span class="s3">&quot;Hashtags&quot;</span><span class="s0">, </span><span class="s3">&quot;Sentiment&quot;</span><span class="s1">])</span>
+
+<span class="s2"># Remove duplicates in the Tweet Text column</span>
+<span class="s1">df[</span><span class="s3">&quot;Text&quot;</span><span class="s1">] = df[</span><span class="s3">&quot;Text&quot;</span><span class="s1">].str.lower().str.replace(</span><span class="s3">&quot;[^\w\s]&quot;</span><span class="s0">, </span><span class="s3">&quot;&quot;</span><span class="s0">, </span><span class="s1">regex=</span><span class="s0">True</span><span class="s1">)</span>
+<span class="s1">df.drop_duplicates(subset=[</span><span class="s3">&quot;Text&quot;</span><span class="s1">]</span><span class="s0">, </span><span class="s1">inplace=</span><span class="s0">True</span><span class="s1">)</span>
+
+<span class="s2"># Apply the function to the Tweet Text column to create a new column for the category</span>
+<span class="s1">df[</span><span class="s3">&quot;Category&quot;</span><span class="s1">] = df[</span><span class="s3">&quot;Text&quot;</span><span class="s1">].apply(extract_category)</span>
+
+<span class="s2"># Append the DataFrame to the CSV file</span>
+<span class="s0">with </span><span class="s1">open(</span><span class="s3">&quot;Sentiment_Data_Analysis.csv&quot;</span><span class="s0">, </span><span class="s3">&quot;a&quot;</span><span class="s0">, </span><span class="s1">newline = </span><span class="s3">''</span><span class="s0">, </span><span class="s1">encoding=</span><span class="s3">&quot;utf-8&quot;</span><span class="s1">) </span><span class="s0">as </span><span class="s1">f:</span>
+    <span class="s1">df.to_csv(f</span><span class="s0">,</span><span class="s1">mode=</span><span class="s3">&quot;w&quot;</span><span class="s0">, </span><span class="s1">header=f.tell()==</span><span class="s4">0</span><span class="s0">, </span><span class="s1">index=</span><span class="s0">False</span><span class="s1">)</span>
+
+
+
+</pre>
+</body>
+</html>
